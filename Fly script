@@ -1,0 +1,75 @@
+-- FLY SYSTEM (For Your Own Game Only)
+
+local player = game.Players.LocalPlayer
+
+-- Create GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "FlyGUI"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local button = Instance.new("TextButton")
+button.Name = "FlyButton"
+button.Text = "Fly / Unfly"
+button.Size = UDim2.new(0, 120, 0, 40)
+button.Position = UDim2.new(0.05, 0, 0.2, 0)
+button.BackgroundColor3 = Color3.fromRGB(40,40,40)
+button.TextColor3 = Color3.fromRGB(255,255,255)
+button.BorderSizePixel = 0
+button.Parent = gui
+
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local flying = false
+local speed = 60
+
+local function startFly()
+	flying = true
+	local root = character:WaitForChild("HumanoidRootPart")
+
+	local bv = Instance.new("BodyVelocity")
+	bv.Name = "FlyVelocity"
+	bv.MaxForce = Vector3.new(1e6,1e6,1e6)
+	bv.Velocity = Vector3.zero
+	bv.Parent = root
+
+	local bg = Instance.new("BodyGyro")
+	bg.Name = "FlyGyro"
+	bg.MaxTorque = Vector3.new(1e6,1e6,1e6)
+	bg.P = 5000
+	bg.Parent = root
+
+	task.spawn(function()
+		while flying do
+			local cam = workspace.CurrentCamera
+			local movement = humanoid.MoveDirection
+
+			bg.CFrame = CFrame.new(root.Position, root.Position + cam.CFrame.LookVector)
+			bv.Velocity = movement * speed
+
+			task.wait()
+		end
+	end)
+end
+
+local function stopFly()
+	flying = false
+	local root = character:FindFirstChild("HumanoidRootPart")
+
+	if root then
+		local bv = root:FindFirstChild("FlyVelocity")
+		local bg = root:FindFirstChild("FlyGyro")
+		if bv then bv:Destroy() end
+		if bg then bg:Destroy() end
+	end
+end
+
+button.MouseButton1Click:Connect(function()
+	if flying then
+		stopFly()
+		button.Text = "Fly / Unfly"
+	else
+		startFly()
+		button.Text = "Stop Fly"
+	end
+end)
